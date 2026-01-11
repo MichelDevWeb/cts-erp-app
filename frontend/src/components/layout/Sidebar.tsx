@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
+import { useAuth } from '@/hooks/useAuth'
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -10,6 +11,8 @@ import {
   Package,
   ChevronLeft,
   Package2,
+  Building2,
+  Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -26,9 +29,14 @@ const managementNav = [
   { name: 'Products', href: '/products', icon: Package },
 ]
 
+const adminNav = [
+  { name: 'Tenant Requests', href: '/admin/tenant-requests', icon: Building2 },
+]
+
 export function Sidebar() {
   const location = useLocation()
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { isAdmin } = useAuth()
 
   return (
     <aside
@@ -65,7 +73,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-1 p-2">
+      <nav className="flex flex-col gap-1 p-2 overflow-y-auto h-[calc(100vh-4rem)]">
         <div className="py-2">
           {sidebarOpen && (
             <p className="px-3 mb-2 text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">
@@ -125,8 +133,44 @@ export function Sidebar() {
             )
           })}
         </div>
+
+        {/* Admin Section */}
+        {isAdmin && (
+          <>
+            <Separator className="my-2 bg-sidebar-border" />
+
+            <div className="py-2">
+              {sidebarOpen && (
+                <p className="px-3 mb-2 text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Admin
+                </p>
+              )}
+              {adminNav.map((item) => {
+                const isActive = location.pathname === item.href ||
+                  location.pathname.startsWith(item.href)
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      !sidebarOpen && 'justify-center'
+                    )}
+                    title={!sidebarOpen ? item.name : undefined}
+                  >
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    {sidebarOpen && <span>{item.name}</span>}
+                  </Link>
+                )
+              })}
+            </div>
+          </>
+        )}
       </nav>
     </aside>
   )
 }
-

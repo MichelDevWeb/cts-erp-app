@@ -9,10 +9,19 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type UserRole = 'admin' | 'manager' | 'staff'
+// Updated roles: admin, guest, staff, customer
+export type UserRole = 'admin' | 'guest' | 'staff' | 'customer'
 export type OrderStatus = 'draft' | 'confirmed' | 'shipped' | 'completed' | 'canceled'
 export type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'void'
 export type ShipmentStatus = 'pending' | 'in_transit' | 'delivered'
+export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'accepted'
+export type NotificationType = 
+  | 'tenant_request_submitted'
+  | 'tenant_request_approved'
+  | 'tenant_request_rejected'
+  | 'tenant_created'
+  | 'role_updated'
+  | 'system'
 
 export interface Database {
   public: {
@@ -61,6 +70,91 @@ export interface Database {
           role?: UserRole
           created_at?: string
           updated_at?: string
+        }
+      }
+      tenant_requests: {
+        Row: {
+          id: string
+          user_id: string
+          company_name: string
+          company_address: string | null
+          company_phone: string | null
+          company_email: string | null
+          business_type: string | null
+          description: string | null
+          status: RequestStatus
+          reviewed_by: string | null
+          reviewed_at: string | null
+          review_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          company_name: string
+          company_address?: string | null
+          company_phone?: string | null
+          company_email?: string | null
+          business_type?: string | null
+          description?: string | null
+          status?: RequestStatus
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          review_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_name?: string
+          company_address?: string | null
+          company_phone?: string | null
+          company_email?: string | null
+          business_type?: string | null
+          description?: string | null
+          status?: RequestStatus
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          review_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: NotificationType
+          title: string
+          message: string
+          data: Json
+          is_read: boolean
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: NotificationType
+          title: string
+          message: string
+          data?: Json
+          is_read?: boolean
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: NotificationType
+          title?: string
+          message?: string
+          data?: Json
+          is_read?: boolean
+          read_at?: string | null
+          created_at?: string
         }
       }
       customers: {
@@ -295,7 +389,62 @@ export interface Database {
       order_status: OrderStatus
       invoice_status: InvoiceStatus
       shipment_status: ShipmentStatus
+      request_status: RequestStatus
+      notification_type: NotificationType
+    }
+    Functions: {
+      tenant_id: {
+        Args: Record<string, never>
+        Returns: string
+      }
+      user_role: {
+        Args: Record<string, never>
+        Returns: UserRole
+      }
+      is_admin: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
+      get_user_role: {
+        Args: Record<string, never>
+        Returns: UserRole
+      }
+      get_unread_notification_count: {
+        Args: Record<string, never>
+        Returns: number
+      }
+      approve_tenant_request: {
+        Args: { p_request_id: string; p_notes?: string }
+        Returns: Json
+      }
+      reject_tenant_request: {
+        Args: { p_request_id: string; p_notes?: string }
+        Returns: Json
+      }
+      accept_approved_request: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: boolean
+      }
+      mark_all_notifications_read: {
+        Args: Record<string, never>
+        Returns: number
+      }
     }
   }
 }
 
+// Helper types for easier use
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Tenant = Database['public']['Tables']['tenants']['Row']
+export type TenantRequest = Database['public']['Tables']['tenant_requests']['Row']
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type Customer = Database['public']['Tables']['customers']['Row']
+export type Product = Database['public']['Tables']['products']['Row']
+export type Order = Database['public']['Tables']['orders']['Row']
+export type OrderItem = Database['public']['Tables']['order_items']['Row']
+export type Invoice = Database['public']['Tables']['invoices']['Row']
+export type Shipment = Database['public']['Tables']['shipments']['Row']

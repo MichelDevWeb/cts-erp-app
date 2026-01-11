@@ -27,35 +27,7 @@ CREATE TYPE invoice_status AS ENUM ('draft', 'issued', 'paid', 'void');
 CREATE TYPE shipment_status AS ENUM ('pending', 'in_transit', 'delivered');
 
 -- =============================================================================
--- 3. HELPER FUNCTIONS
--- =============================================================================
-
--- Function to get the current user's tenant_id from JWT claims
-CREATE OR REPLACE FUNCTION auth.tenant_id()
-RETURNS uuid
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT COALESCE(
-    (current_setting('request.jwt.claims', true)::json->>'tenant_id')::uuid,
-    (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
-  );
-$$;
-
--- Function to get the current user's role from JWT claims
-CREATE OR REPLACE FUNCTION auth.user_role()
-RETURNS user_role
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT COALESCE(
-    (current_setting('request.jwt.claims', true)::json->>'role')::user_role,
-    (SELECT role FROM public.profiles WHERE id = auth.uid())
-  );
-$$;
-
--- =============================================================================
--- 4. TABLES
+-- 3. TABLES
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -195,8 +167,44 @@ CREATE INDEX idx_shipments_tenant_id ON public.shipments(tenant_id);
 CREATE INDEX idx_shipments_order_id ON public.shipments(order_id);
 
 -- =============================================================================
+-- 4. HELPER FUNCTIONS
+-- =============================================================================
+-- Note: These functions are created in public schema (not auth) due to Supabase permissions
+-- Must be created AFTER tables exist since they reference public.profiles
+-- Must be created BEFORE RLS policies since policies use these functions
+
+-- Function to get the current user's tenant_id from JWT claims
+CREATE OR REPLACE FUNCTION public.tenant_id()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (current_setting('request.jwt.claims', true)::json->>'tenant_id')::uuid,
+    (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+  );
+$$;
+
+-- Function to get the current user's role from JWT claims
+CREATE OR REPLACE FUNCTION public.user_role()
+RETURNS user_role
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(
+    (current_setting('request.jwt.claims', true)::json->>'role')::user_role,
+    (SELECT role FROM public.profiles WHERE id = auth.uid())
+  );
+$$;
+
+-- =============================================================================
 -- 6. ROW LEVEL SECURITY (RLS) POLICIES
 -- =============================================================================
+-- Note: These policies use public.tenant_id() function which must exist first
 
 -- Enable RLS on all tables
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
@@ -214,7 +222,7 @@ ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view their own tenant"
   ON public.tenants FOR SELECT
-  USING (id = auth.tenant_id());
+  USING (id = public.tenant_id());
 
 -- -----------------------------------------------------------------------------
 -- Profiles Policies
@@ -222,12 +230,12 @@ CREATE POLICY "Users can view their own tenant"
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view profiles in their tenant"
   ON public.profiles FOR SELECT
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE
   USING (id = auth.uid())
-  WITH CHECK (id = auth.uid() AND tenant_id = auth.tenant_id());
+  WITH CHECK (id = auth.uid() AND tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can insert their own profile"
   ON public.profiles FOR INSERT
@@ -239,20 +247,20 @@ CREATE POLICY "Users can insert their own profile"
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view customers in their tenant"
   ON public.customers FOR SELECT
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can insert customers in their tenant"
   ON public.customers FOR INSERT
-  WITH CHECK (tenant_id = auth.tenant_id());
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can update customers in their tenant"
   ON public.customers FOR UPDATE
-  USING (tenant_id = auth.tenant_id())
-  WITH CHECK (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id())
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can delete customers in their tenant"
   ON public.customers FOR DELETE
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 -- -----------------------------------------------------------------------------
 -- Products Policies
@@ -260,20 +268,20 @@ CREATE POLICY "Users can delete customers in their tenant"
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view products in their tenant"
   ON public.products FOR SELECT
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can insert products in their tenant"
   ON public.products FOR INSERT
-  WITH CHECK (tenant_id = auth.tenant_id());
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can update products in their tenant"
   ON public.products FOR UPDATE
-  USING (tenant_id = auth.tenant_id())
-  WITH CHECK (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id())
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can delete products in their tenant"
   ON public.products FOR DELETE
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 -- -----------------------------------------------------------------------------
 -- Orders Policies
@@ -281,20 +289,20 @@ CREATE POLICY "Users can delete products in their tenant"
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view orders in their tenant"
   ON public.orders FOR SELECT
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can insert orders in their tenant"
   ON public.orders FOR INSERT
-  WITH CHECK (tenant_id = auth.tenant_id());
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can update orders in their tenant"
   ON public.orders FOR UPDATE
-  USING (tenant_id = auth.tenant_id())
-  WITH CHECK (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id())
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can delete orders in their tenant"
   ON public.orders FOR DELETE
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 -- -----------------------------------------------------------------------------
 -- Order Items Policies
@@ -306,7 +314,7 @@ CREATE POLICY "Users can view order items for their orders"
     EXISTS (
       SELECT 1 FROM public.orders
       WHERE orders.id = order_items.order_id
-      AND orders.tenant_id = auth.tenant_id()
+      AND orders.tenant_id = public.tenant_id()
     )
   );
 
@@ -316,7 +324,7 @@ CREATE POLICY "Users can insert order items for their orders"
     EXISTS (
       SELECT 1 FROM public.orders
       WHERE orders.id = order_items.order_id
-      AND orders.tenant_id = auth.tenant_id()
+      AND orders.tenant_id = public.tenant_id()
     )
   );
 
@@ -326,7 +334,7 @@ CREATE POLICY "Users can update order items for their orders"
     EXISTS (
       SELECT 1 FROM public.orders
       WHERE orders.id = order_items.order_id
-      AND orders.tenant_id = auth.tenant_id()
+      AND orders.tenant_id = public.tenant_id()
     )
   );
 
@@ -336,7 +344,7 @@ CREATE POLICY "Users can delete order items for their orders"
     EXISTS (
       SELECT 1 FROM public.orders
       WHERE orders.id = order_items.order_id
-      AND orders.tenant_id = auth.tenant_id()
+      AND orders.tenant_id = public.tenant_id()
     )
   );
 
@@ -346,20 +354,20 @@ CREATE POLICY "Users can delete order items for their orders"
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view invoices in their tenant"
   ON public.invoices FOR SELECT
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can insert invoices in their tenant"
   ON public.invoices FOR INSERT
-  WITH CHECK (tenant_id = auth.tenant_id());
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can update invoices in their tenant"
   ON public.invoices FOR UPDATE
-  USING (tenant_id = auth.tenant_id())
-  WITH CHECK (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id())
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can delete invoices in their tenant"
   ON public.invoices FOR DELETE
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 -- -----------------------------------------------------------------------------
 -- Shipments Policies
@@ -367,20 +375,20 @@ CREATE POLICY "Users can delete invoices in their tenant"
 -- -----------------------------------------------------------------------------
 CREATE POLICY "Users can view shipments in their tenant"
   ON public.shipments FOR SELECT
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can insert shipments in their tenant"
   ON public.shipments FOR INSERT
-  WITH CHECK (tenant_id = auth.tenant_id());
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can update shipments in their tenant"
   ON public.shipments FOR UPDATE
-  USING (tenant_id = auth.tenant_id())
-  WITH CHECK (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id())
+  WITH CHECK (tenant_id = public.tenant_id());
 
 CREATE POLICY "Users can delete shipments in their tenant"
   ON public.shipments FOR DELETE
-  USING (tenant_id = auth.tenant_id());
+  USING (tenant_id = public.tenant_id());
 
 -- =============================================================================
 -- 7. TRIGGERS FOR AUTOMATIC UPDATES

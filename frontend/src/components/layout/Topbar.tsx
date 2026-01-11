@@ -11,10 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Menu, LogOut, User, Settings } from 'lucide-react'
+import { Menu, LogOut, User, Settings, Shield, Building2 } from 'lucide-react'
+import { NotificationDropdown } from './NotificationDropdown'
 
 export function Topbar() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, role, tenantName, isAdmin } = useAuth()
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
   // Get initials from email or name
@@ -28,6 +29,40 @@ export function Topbar() {
       .join('')
       .toUpperCase()
       .slice(0, 2)
+  }
+
+  const getRoleBadge = () => {
+    if (!role) return null
+    
+    const roleConfig: Record<string, { label: string; className: string }> = {
+      admin: { 
+        label: 'Admin', 
+        className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' 
+      },
+      staff: { 
+        label: 'Staff', 
+        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' 
+      },
+      guest: { 
+        label: 'Guest', 
+        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
+      },
+      customer: { 
+        label: 'Customer', 
+        className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+      },
+    }
+
+    const config = roleConfig[role] || { label: role, className: 'bg-gray-100 text-gray-800' }
+
+    return (
+      <span className={cn(
+        'px-2 py-0.5 rounded-full text-xs font-medium',
+        config.className
+      )}>
+        {config.label}
+      </span>
+    )
   }
 
   return (
@@ -47,10 +82,22 @@ export function Topbar() {
         >
           <Menu className="h-5 w-5" />
         </Button>
+        
+        {/* Tenant Name */}
+        {tenantName && (
+          <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+            <Building2 className="h-4 w-4" />
+            <span>{tenantName}</span>
+          </div>
+        )}
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        {/* Notifications */}
+        <NotificationDropdown />
+
+        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -63,10 +110,13 @@ export function Topbar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {user?.user_metadata?.full_name || 'User'}
-                </p>
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user_metadata?.full_name || 'User'}
+                  </p>
+                  {getRoleBadge()}
+                </div>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
                 </p>
@@ -81,6 +131,15 @@ export function Topbar() {
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Admin Panel</span>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={signOut}
@@ -95,4 +154,3 @@ export function Topbar() {
     </header>
   )
 }
-
