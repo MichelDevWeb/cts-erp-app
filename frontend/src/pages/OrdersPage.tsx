@@ -1,30 +1,33 @@
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, ShoppingCart } from 'lucide-react'
 
 export function OrdersPage() {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('orders.title')}</h1>
           <p className="text-muted-foreground">
-            Manage and track all your orders
+            {t('orders.subtitle')}
           </p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          New Order
+          {t('orders.newOrder')}
         </Button>
       </div>
 
-      {/* Empty State - will be replaced with order list in Phase 1 */}
+      {/* Empty State */}
       <Card>
         <CardHeader>
-          <CardTitle>No orders yet</CardTitle>
+          <CardTitle>{t('orders.noOrdersTitle')}</CardTitle>
           <CardDescription>
-            Create your first order to get started with order management.
+            {t('orders.noOrdersDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center py-10">
@@ -32,11 +35,11 @@ export function OrdersPage() {
             <ShoppingCart className="h-10 w-10 text-muted-foreground" />
           </div>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
-            Orders will appear here once you create them. You'll need customers and products first.
+            {t('orders.emptyNotice')}
           </p>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Create Order
+            {t('orders.createOrderBtn')}
           </Button>
         </CardContent>
       </Card>

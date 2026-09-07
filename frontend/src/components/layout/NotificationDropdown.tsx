@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   getNotifications, 
@@ -7,6 +8,7 @@ import {
   markAllNotificationsRead,
   subscribeToNotifications
 } from '@/api/notifications'
+import { formatRelativeTime } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -28,6 +30,7 @@ import type { Notification, NotificationType } from '@/types/database.types'
 import { cn } from '@/lib/utils'
 
 export function NotificationDropdown() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -106,21 +109,6 @@ export function NotificationDropdown() {
     }
   }
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    if (days < 7) return `${days}d ago`
-    return date.toLocaleDateString()
-  }
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -135,7 +123,7 @@ export function NotificationDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end" forceMount>
         <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notifications</span>
+          <span>{t('notifications.title')}</span>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
@@ -145,7 +133,7 @@ export function NotificationDropdown() {
               disabled={loading}
             >
               <Check className="h-3 w-3 mr-1" />
-              Mark all read
+              {t('notifications.markAllRead')}
             </Button>
           )}
         </DropdownMenuLabel>
@@ -154,7 +142,7 @@ export function NotificationDropdown() {
         {notifications.length === 0 ? (
           <div className="py-8 text-center">
             <Bell className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No notifications yet</p>
+            <p className="text-sm text-muted-foreground">{t('notifications.noNotifications')}</p>
           </div>
         ) : (
           <div className="max-h-[400px] overflow-y-auto">
@@ -181,7 +169,7 @@ export function NotificationDropdown() {
                     {notification.message}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatTime(notification.created_at)}
+                    {formatRelativeTime(notification.created_at)}
                   </p>
                 </div>
                 {!notification.is_read && (

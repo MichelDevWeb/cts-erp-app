@@ -47,12 +47,24 @@ This project is a basic ERP web application for managing orders, invoices, shipm
   - `id (uuid, PK, FK to auth.users)`  
   - `tenant_id (uuid)`  
   - `full_name (text)`  
-  - `role (enum: admin, manager, staff)`  
+  - `role (enum: admin, manager, staff, guest, customer)`  
+  - `session_valid_after (timestamp, default now())`  
+  - `session_timeout_minutes (integer, nullable)`  
   - `created_at (timestamp)`  
+
+- **system_settings** (global system configuration)  
+  - `key (text, PK)`  
+  - `value (jsonb)`  
+  - `description (text)`  
+  - `updated_by (uuid, FK to users.id)`  
+  - `updated_at (timestamp)`  
 
 - **tenants** (company / organization)  
   - `id (uuid, PK)`  
   - `name (text)`  
+  - `is_locked (boolean, default false)`  
+  - `locked_at (timestamp, nullable)`  
+  - `locked_reason (text, nullable)`  
   - `created_at (timestamp)`  
 
 - **customers**  
@@ -199,6 +211,9 @@ src/
     products.ts
     invoices.ts
     shipments.ts
+    tenants.ts
+    tenantRequests.ts
+    security.ts
   components/
     layout/
       Sidebar.tsx
@@ -212,17 +227,33 @@ src/
     common/
       Table.tsx
       Modal.tsx
+      LanguageSwitcher.tsx
+    ui/
+      button.tsx
+      input.tsx
+      password-input.tsx
+      card.tsx
+      label.tsx
   hooks/
     useAuth.ts
   pages/
     Login.tsx
+    Register.tsx
+    ForgotPassword.tsx
+    ResetPassword.tsx
+    GuestLandingPage.tsx
     Dashboard.tsx
     OrdersPage.tsx
     OrderDetailPage.tsx
     InvoicesPage.tsx
     ShipmentsPage.tsx
+    CustomersPage.tsx
+    ProductsPage.tsx
+    AdminTenantRequestsPage.tsx
+    AdminSecurityPage.tsx
   routes/
     AppRoutes.tsx
+    ProtectedRoute.tsx
   styles/
     index.css
   main.tsx

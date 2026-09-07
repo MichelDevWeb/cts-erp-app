@@ -30,18 +30,27 @@ export interface Database {
         Row: {
           id: string
           name: string
+          is_locked: boolean
+          locked_at: string | null
+          locked_reason: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_reason?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
+          is_locked?: boolean
+          locked_at?: string | null
+          locked_reason?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -52,6 +61,7 @@ export interface Database {
           tenant_id: string | null
           full_name: string | null
           role: UserRole
+          session_valid_after?: string | null
           created_at: string
           updated_at: string
         }
@@ -60,6 +70,7 @@ export interface Database {
           tenant_id?: string | null
           full_name?: string | null
           role?: UserRole
+          session_valid_after?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -68,7 +79,28 @@ export interface Database {
           tenant_id?: string | null
           full_name?: string | null
           role?: UserRole
+          session_valid_after?: string | null
           created_at?: string
+          updated_at?: string
+        }
+      }
+      system_settings: {
+        Row: {
+          key: string
+          value: Json
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: Json
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: Json
+          updated_by?: string | null
           updated_at?: string
         }
       }
@@ -86,6 +118,7 @@ export interface Database {
           reviewed_by: string | null
           reviewed_at: string | null
           review_notes: string | null
+          tenant_id: string | null
           created_at: string
           updated_at: string
         }
@@ -102,6 +135,7 @@ export interface Database {
           reviewed_by?: string | null
           reviewed_at?: string | null
           review_notes?: string | null
+          tenant_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -118,6 +152,7 @@ export interface Database {
           reviewed_by?: string | null
           reviewed_at?: string | null
           review_notes?: string | null
+          tenant_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -425,6 +460,10 @@ export interface Database {
         Args: { p_request_id: string }
         Returns: Json
       }
+      toggle_tenant_lock: {
+        Args: { p_tenant_id: string; p_is_locked: boolean; p_reason?: string }
+        Returns: Json
+      }
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean
@@ -432,6 +471,30 @@ export interface Database {
       mark_all_notifications_read: {
         Args: Record<string, never>
         Returns: number
+      }
+      get_session_config: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      update_session_config: {
+        Args: {
+          p_timeout_minutes: number
+          p_inactivity_minutes?: number
+          p_enable_inactivity?: boolean
+        }
+        Returns: Json
+      }
+      reset_user_session: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      reset_all_sessions: {
+        Args: { p_tenant_id?: string }
+        Returns: Json
+      }
+      get_users_admin: {
+        Args: Record<string, never>
+        Returns: Json
       }
     }
   }
@@ -448,3 +511,4 @@ export type Order = Database['public']['Tables']['orders']['Row']
 export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type Invoice = Database['public']['Tables']['invoices']['Row']
 export type Shipment = Database['public']['Tables']['shipments']['Row']
+export type SystemSetting = Database['public']['Tables']['system_settings']['Row']

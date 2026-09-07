@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Package2, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 
 export function Register() {
+  const { t } = useTranslation()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,14 +31,14 @@ export function Register() {
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match')
+      setErrorMessage(t('auth.passwordsDoNotMatch'))
       setIsLoading(false)
       return
     }
 
     // Validate password strength
     if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters')
+      setErrorMessage(t('auth.passwordMinLength'))
       setIsLoading(false)
       return
     }
@@ -45,7 +49,7 @@ export function Register() {
       setErrorMessage(error.message)
       setIsLoading(false)
     } else {
-      setSuccessMessage('Account created! Please check your email to verify your account.')
+      setSuccessMessage(t('auth.accountCreatedVerify'))
       setIsLoading(false)
       // Optionally redirect after a delay
       setTimeout(() => {
@@ -55,7 +59,12 @@ export function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+      {/* Top right language switcher */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher variant="outline" />
+      </div>
+
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="flex flex-col items-center mb-8">
@@ -66,16 +75,16 @@ export function Register() {
             <span className="text-2xl font-bold tracking-tight">CTS ERP</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            Create your account to get started
+            {t('auth.appTagline')}
           </p>
         </div>
 
         {/* Register Card */}
         <Card className="border-0 shadow-xl">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl font-semibold">Create account</CardTitle>
+            <CardTitle className="text-2xl font-semibold">{t('auth.createAccountTitle')}</CardTitle>
             <CardDescription>
-              Enter your details to create your account
+              {t('auth.createAccountSubtitle')}
             </CardDescription>
           </CardHeader>
           
@@ -96,11 +105,11 @@ export function Register() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t('auth.fullName')}</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={t('auth.fullNamePlaceholder')}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -111,11 +120,11 @@ export function Register() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@company.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -126,10 +135,9 @@ export function Register() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -141,10 +149,9 @@ export function Register() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
+                <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
+                <PasswordInput
                   id="confirmPassword"
-                  type="password"
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -165,17 +172,17 @@ export function Register() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {t('auth.creatingAccount')}
                   </>
                 ) : (
-                  'Create account'
+                  t('auth.createAccountTitle')
                 )}
               </Button>
               
               <p className="text-sm text-muted-foreground text-center">
-                Already have an account?{' '}
+                {t('auth.alreadyHaveAccount')}{' '}
                 <Link to="/login" className="text-primary hover:underline font-medium">
-                  Sign in
+                  {t('auth.signIn')}
                 </Link>
               </p>
             </CardFooter>
@@ -184,7 +191,7 @@ export function Register() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          By creating an account, you agree to our Terms of Service and Privacy Policy.
+          {t('common.byCreatingAccountAgree')}
         </p>
       </div>
     </div>

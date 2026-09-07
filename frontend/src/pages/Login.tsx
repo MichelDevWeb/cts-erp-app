@@ -1,13 +1,20 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package2, Loader2, AlertCircle } from 'lucide-react'
+import { Package2, Loader2, AlertCircle, ShieldAlert, Clock } from 'lucide-react'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 
 export function Login() {
+  const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
+  const reason = searchParams.get('reason')
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -32,7 +39,12 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+      {/* Top right language switcher */}
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSwitcher variant="outline" />
+      </div>
+
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="flex flex-col items-center mb-8">
@@ -43,21 +55,45 @@ export function Login() {
             <span className="text-2xl font-bold tracking-tight">CTS ERP</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            Manage your orders, invoices, and shipments
+            {t('auth.appTagline')}
           </p>
         </div>
 
         {/* Login Card */}
         <Card className="border-0 shadow-xl">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-semibold">{t('auth.welcomeBack')}</CardTitle>
             <CardDescription>
-              Sign in to your account to continue
+              {t('auth.signInSubtitle')}
             </CardDescription>
           </CardHeader>
           
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
+              {reason === 'session_reset' && (
+                <div className="flex items-start gap-3 p-3.5 text-sm text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg">
+                  <ShieldAlert className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">{t('auth.sessionResetTitle')}</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400/90 mt-0.5">
+                      {t('auth.sessionResetNotice')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {reason === 'session_expired' && (
+                <div className="flex items-start gap-3 p-3.5 text-sm text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-lg">
+                  <Clock className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">{t('auth.sessionExpiredTitle')}</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400/90 mt-0.5">
+                      {t('auth.sessionExpiredNotice')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {errorMessage && (
                 <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg">
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -66,11 +102,11 @@ export function Login() {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@company.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -82,17 +118,16 @@ export function Login() {
               
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('auth.password')}</Label>
                   <Link 
                     to="/forgot-password" 
                     className="text-sm text-primary hover:underline"
                   >
-                    Forgot password?
+                    {t('auth.forgotPassword')}
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -113,17 +148,17 @@ export function Login() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t('auth.signingIn')}
                   </>
                 ) : (
-                  'Sign in'
+                  t('auth.signIn')
                 )}
               </Button>
               
               <p className="text-sm text-muted-foreground text-center">
-                Don't have an account?{' '}
+                {t('auth.dontHaveAccount')}{' '}
                 <Link to="/register" className="text-primary hover:underline font-medium">
-                  Sign up
+                  {t('auth.signUp')}
                 </Link>
               </p>
             </CardFooter>
@@ -132,7 +167,7 @@ export function Login() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          By signing in, you agree to our Terms of Service and Privacy Policy.
+          {t('common.bySigningInAgree')}
         </p>
       </div>
     </div>

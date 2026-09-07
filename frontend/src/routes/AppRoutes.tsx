@@ -3,6 +3,8 @@ import { ProtectedRoute, GuestOnlyRoute, AdminRoute } from './ProtectedRoute'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { Login } from '@/pages/Login'
 import { Register } from '@/pages/Register'
+import { ForgotPassword } from '@/pages/ForgotPassword'
+import { ResetPassword } from '@/pages/ResetPassword'
 import { GuestLandingPage } from '@/pages/GuestLandingPage'
 import { Dashboard } from '@/pages/Dashboard'
 import { OrdersPage } from '@/pages/OrdersPage'
@@ -12,6 +14,7 @@ import { ShipmentsPage } from '@/pages/ShipmentsPage'
 import { CustomersPage } from '@/pages/CustomersPage'
 import { ProductsPage } from '@/pages/ProductsPage'
 import { AdminTenantRequestsPage } from '@/pages/AdminTenantRequestsPage'
+import { AdminSecurityPage } from '@/pages/AdminSecurityPage'
 
 export function AppRoutes() {
   return (
@@ -20,6 +23,8 @@ export function AppRoutes() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Guest onboarding route */}
         <Route
@@ -53,6 +58,14 @@ export function AppRoutes() {
             element={
               <AdminRoute>
                 <AdminTenantRequestsPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/security"
+            element={
+              <AdminRoute>
+                <AdminSecurityPage />
               </AdminRoute>
             }
           />

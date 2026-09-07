@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
@@ -5,13 +6,14 @@ import {
   FileText, 
   Truck, 
   Users, 
-  TrendingUp,
-  Package,
-  Clock,
-  CheckCircle2
+  TrendingUp, 
+  Package, 
+  Clock, 
+  CheckCircle2 
 } from 'lucide-react'
 
 export function Dashboard() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'there'
 
@@ -20,10 +22,10 @@ export function Dashboard() {
       {/* Welcome Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, {userName}!
+          {t('dashboard.welcome', { name: userName })}
         </h1>
         <p className="text-muted-foreground mt-1">
-          Here's an overview of your business today.
+          {t('dashboard.overviewSubtitle')}
         </p>
       </div>
 
@@ -31,52 +33,52 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalOrders')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">—</div>
             <p className="text-xs text-muted-foreground">
-              Connect Supabase to see data
+              {t('dashboard.connectSupabase')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.pendingInvoices')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">—</div>
             <p className="text-xs text-muted-foreground">
-              Connect Supabase to see data
+              {t('dashboard.connectSupabase')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Transit</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.inTransit')}</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">—</div>
             <p className="text-xs text-muted-foreground">
-              Connect Supabase to see data
+              {t('dashboard.connectSupabase')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalCustomers')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">—</div>
             <p className="text-xs text-muted-foreground">
-              Connect Supabase to see data
+              {t('dashboard.connectSupabase')}
             </p>
           </CardContent>
         </Card>
@@ -87,10 +89,10 @@ export function Dashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Getting Started
+            {t('dashboard.gettingStartedTitle')}
           </CardTitle>
           <CardDescription>
-            Complete these steps to set up your ERP system
+            {t('dashboard.gettingStartedDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -100,9 +102,9 @@ export function Dashboard() {
                 <CheckCircle2 className="h-4 w-4 text-primary" />
               </div>
               <div className="space-y-1">
-                <p className="font-medium">Create your account</p>
+                <p className="font-medium">{t('dashboard.stepAccountCreatedTitle')}</p>
                 <p className="text-sm text-muted-foreground">
-                  You're logged in! Your account is ready to go.
+                  {t('dashboard.stepAccountCreatedDesc')}
                 </p>
               </div>
             </div>
@@ -112,9 +114,9 @@ export function Dashboard() {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <p className="font-medium">Connect to Supabase</p>
+                <p className="font-medium">{t('dashboard.stepSupabaseTitle')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Add your Supabase URL and anon key in the .env.local file to enable data storage.
+                  {t('dashboard.stepSupabaseDesc')}
                 </p>
               </div>
             </div>
@@ -124,9 +126,9 @@ export function Dashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <p className="font-medium">Add your first customer</p>
+                <p className="font-medium">{t('dashboard.stepCustomerTitle')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Go to Customers and add your first customer to start creating orders.
+                  {t('dashboard.stepCustomerDesc')}
                 </p>
               </div>
             </div>
@@ -136,9 +138,9 @@ export function Dashboard() {
                 <Package className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <p className="font-medium">Add your products</p>
+                <p className="font-medium">{t('dashboard.stepProductTitle')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Go to Products and add your catalog items with SKU, pricing, and units.
+                  {t('dashboard.stepProductDesc')}
                 </p>
               </div>
             </div>
@@ -148,9 +150,9 @@ export function Dashboard() {
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <p className="font-medium">Create your first order</p>
+                <p className="font-medium">{t('dashboard.stepOrderTitle')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Once you have customers and products, create your first order!
+                  {t('dashboard.stepOrderDesc')}
                 </p>
               </div>
             </div>

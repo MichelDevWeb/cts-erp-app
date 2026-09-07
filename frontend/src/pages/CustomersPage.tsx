@@ -1,30 +1,33 @@
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Users } from 'lucide-react'
 
 export function CustomersPage() {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('customers.title')}</h1>
           <p className="text-muted-foreground">
-            Manage your customer directory
+            {t('customers.subtitle')}
           </p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Add Customer
+          {t('customers.addCustomer')}
         </Button>
       </div>
 
-      {/* Empty State - will be replaced with customer list in Phase 1 */}
+      {/* Empty State */}
       <Card>
         <CardHeader>
-          <CardTitle>No customers yet</CardTitle>
+          <CardTitle>{t('customers.noCustomersTitle')}</CardTitle>
           <CardDescription>
-            Add your first customer to start creating orders.
+            {t('customers.noCustomersDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center py-10">
@@ -32,11 +35,11 @@ export function CustomersPage() {
             <Users className="h-10 w-10 text-muted-foreground" />
           </div>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
-            Customer management will be fully implemented in Phase 1. Connect to Supabase to enable data storage.
+            {t('customers.emptyNotice')}
           </p>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Customer
+            {t('customers.addCustomerBtn')}
           </Button>
         </CardContent>
       </Card>

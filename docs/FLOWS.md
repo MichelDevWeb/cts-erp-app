@@ -10,6 +10,7 @@ This document describes all user flows in the CTS ERP application.
 4. [Admin Approval Flow](#admin-approval-flow)
 5. [Notification System](#notification-system)
 6. [Authentication Flow](#authentication-flow)
+7. [Session Management & Expiration Flow](#session-management--expiration-flow)
 
 ---
 
@@ -238,9 +239,61 @@ CREATE TABLE notifications (
 
 ### Logout
 
-1. User clicks "Sign out" in user menu
-2. Session is destroyed
-3. User is redirected to `/login`
+1. User clicks "Sign out" (Đăng xuất) in topbar or guest header
+2. `signOut()` is executed via `AuthContext`:
+   - Supabase auth session is destroyed (`supabase.auth.signOut()`)
+   - Shared client auth state is cleared
+   - User is cleanly redirected directly to `/login` via `window.location.href = '/login'`
+
+### Tenant Lock & Unlock Lifecycle (Admin Management)
+
+Administrators have full authority to lock or unlock tenants that have completed registration:
+
+1. **Admin Management UI**:
+   - Located at `/admin/tenant-requests` in the "Doanh nghiệp đã hoàn thành" (Completed Tenants) tab.
+   - Shows all active and locked companies with owner information, member counts, and lock records.
+2. **Lock Action**:
+   - Admin clicks "Khoá doanh nghiệp" (Lock Tenant).
+   - Admin can input an optional suspension reason (e.g. "Payment overdue", "Terms violation").
+   - System calls `toggle_tenant_lock(p_tenant_id, true, reason)`:
+     - Sets `tenants.is_locked = true`, `locked_at = now()`, `locked_reason = reason`.
+     - Automatically creates system notifications for all members of that tenant.
+3. **Access Restriction (`TenantLockedScreen`)**:
+   - If a member of a locked tenant logs in or navigates to any protected route, `ProtectedRoute` intercepts them and renders `TenantLockedScreen`.
+   - Displays the company name, lock reason, a "Recheck Status" button, and an explicit "Sign out" button.
+   - System administrators (`role = 'admin'`) are immune to tenant locking and can always manage and unlock tenants.
+4. **Unlock Action**:
+   - Admin clicks "Mở khoá" (Unlock Tenant) and confirms.
+   - System calls `toggle_tenant_lock(p_tenant_id, false)`:
+     - Clears `is_locked`, `locked_at`, `locked_reason`.
+     - Notifies members that their company account has been reactivated.
+     - Members immediately regain full access upon refresh/navigation.
+
+### Forgot Password & Recovery Flow
+
+1. **Request Reset**:
+   - User clicks "Forgot password?" at `/login` and navigates to `/forgot-password`.
+   - User inputs their registered email address.
+   - Application calls `supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/reset-password` })`.
+   - Page presents a confirmation card with the submitted email, a 60-second cooldown on the resend button, and a link back to `/login`.
+2. **Email Verification Link**:
+   - User receives an email with an action link pointing to `/reset-password`.
+   - The link contains recovery tokens/parameters (`type=recovery` or auth code).
+3. **Password Update**:
+   - User lands on `/reset-password`.
+   - If accessed directly or if link is expired/invalid, an informative "Link Expired or Invalid" card is displayed with a button to request a new link.
+   - If recovery token is valid, user inputs new password and confirm password using the `PasswordInput` component (with show/hide eye toggle).
+   - Application validates minimum 6 characters and password matching.
+   - Application calls `supabase.auth.updateUser({ password })`.
+4. **Post-Reset Security**:
+   - For security-first design, active recovery session is terminated (`signOut()`).
+   - Success screen displays with a countdown timer, then automatically redirects to `/login`.
+
+### Password Visibility Toggle (`PasswordInput`)
+
+- All password fields throughout the application (`Login`, `Register`, `ResetPassword`) use the unified `PasswordInput` component.
+- Features an accessible eye icon button (`Eye` / `EyeOff` from Lucide) enabling users to toggle plaintext/masked input.
+- Fully localized with `aria-label` for screen readers and optimized keyboard navigation (`tabIndex={-1}`).
 
 ### Session Persistence
 
@@ -257,6 +310,7 @@ CREATE TABLE notifications (
 | Route | Protection | Description |
 |-------|------------|-------------|
 | `/login`, `/register` | Public | Anyone can access |
+| `/forgot-password`, `/reset-password` | Public | Password recovery flow |
 | `/onboarding` | Guest Only | Only guests without tenant |
 | `/dashboard`, `/orders`, etc. | Protected + Tenant | Requires auth + tenant |
 | `/admin/*` | Admin Only | Requires admin role |
@@ -280,7 +334,97 @@ CREATE TABLE notifications (
 
 ---
 
+## Session Management & Expiration Flow
+
+### Overview
+
+CTS ERP implements a centralized, database-backed session duration limit and session invalidation capability controlled by Super Administrators at `/admin/security`.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as Super Administrator
+    actor User as Standard User / Staff
+    participant Frontend as Client App (AuthContext)
+    participant DB as Supabase Postgres
+
+    Note over Admin, DB: 1. Admin Configures Global Expiration
+    Admin->>Frontend: Select 4h timeout & click Save
+    Frontend->>DB: update_session_config(p_timeout_minutes: 240)
+    DB-->>Frontend: Updated session_config jsonb
+
+    Note over Admin, DB: 2. Admin Resets User Session
+    Admin->>Frontend: Click "Reset Session" for Target User
+    Frontend->>DB: reset_user_session(p_user_id)
+    DB->>DB: UPDATE profiles SET session_valid_after = now()
+    DB->>DB: Create system notification for user
+
+    Note over User, Frontend: 3. Client-Side Enforcement
+    Frontend->>Frontend: Periodic check (30s) / On visibility focus
+    alt Elapsed Time > timeout_minutes
+        Frontend->>Frontend: signOut('session_expired')
+        Frontend-->>User: Redirect to /login?reason=session_expired
+    else session_valid_after > session_start_time
+        Frontend->>Frontend: signOut('session_reset')
+        Frontend-->>User: Redirect to /login?reason=session_reset
+    end
+```
+
+### Key Features
+
+1. **Configurable Global Session Timeout**:
+   - Presets: 15m, 30m, 1h, 4h, 8h, 24h (default), 7d, or custom minutes.
+   - Enforced client-side via `AuthContext` checking elapsed session time from `cts_session_start_time`.
+2. **Global Session Reset**:
+   - Super Admin can invalidate all non-admin sessions across the entire platform.
+   - Calling Admin's session is excluded so administrative work is not interrupted.
+3. **Per-User Session Reset**:
+   - Super Admin can target an individual user to immediately terminate their access across all devices.
+4. **Transparent Login Notices**:
+   - Clean alert banners rendered on `/login` when redirected due to `?reason=session_reset` or `?reason=session_expired`.
+
+---
+
 ## Database Functions
+
+### `get_session_config()`
+
+**Security**: SECURITY DEFINER, public authenticated access
+
+**Returns**: `jsonb` configuration containing `timeout_minutes`, `inactivity_timeout_minutes`, `enable_inactivity_timeout`, and `last_global_reset_at`.
+
+### `update_session_config(p_timeout_minutes, p_inactivity_minutes, p_enable_inactivity)`
+
+**Security**: SECURITY DEFINER, requires admin role (`is_admin()`)
+
+**Actions**:
+1. Verifies caller has administrator role.
+2. Updates `system_settings` table where `key = 'session_config'`.
+3. Sets minimum duration boundary (5 minutes).
+
+### `reset_user_session(p_user_id)`
+
+**Security**: SECURITY DEFINER, requires admin role (`is_admin()`)
+
+**Actions**:
+1. Verifies caller has administrator role.
+2. Updates `profiles.session_valid_after = now()` for target user.
+3. Inserts an automated system notification informing the user of the session reset.
+
+### `reset_all_sessions(p_tenant_id)`
+
+**Security**: SECURITY DEFINER, requires admin role (`is_admin()`)
+
+**Actions**:
+1. Verifies caller has administrator role.
+2. If `p_tenant_id` provided: updates `session_valid_after = now()` for all users in that tenant.
+3. If `p_tenant_id` NULL: updates `session_valid_after = now()` for all non-admin users system-wide and records `last_global_reset_at`.
+
+### `get_users_admin()`
+
+**Security**: SECURITY DEFINER, requires admin role (`is_admin()`)
+
+**Returns**: Table of all user accounts joined with auth data, tenant name, and `session_valid_after` timestamps.
 
 ### `approve_tenant_request(p_request_id, p_notes)`
 

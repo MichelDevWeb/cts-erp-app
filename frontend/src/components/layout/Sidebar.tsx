@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuth } from '@/hooks/useAuth'
@@ -13,30 +14,33 @@ import {
   Package2,
   Building2,
   Shield,
+  KeyRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Orders', href: '/orders', icon: ShoppingCart },
-  { name: 'Invoices', href: '/invoices', icon: FileText },
-  { name: 'Shipments', href: '/shipments', icon: Truck },
-]
-
-const managementNav = [
-  { name: 'Customers', href: '/customers', icon: Users },
-  { name: 'Products', href: '/products', icon: Package },
-]
-
-const adminNav = [
-  { name: 'Tenant Requests', href: '/admin/tenant-requests', icon: Building2 },
-]
-
 export function Sidebar() {
+  const { t } = useTranslation()
   const location = useLocation()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { isAdmin } = useAuth()
+
+  const navigation = [
+    { key: 'dashboard', name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { key: 'orders', name: t('nav.orders'), href: '/orders', icon: ShoppingCart },
+    { key: 'invoices', name: t('nav.invoices'), href: '/invoices', icon: FileText },
+    { key: 'shipments', name: t('nav.shipments'), href: '/shipments', icon: Truck },
+  ]
+
+  const managementNav = [
+    { key: 'customers', name: t('nav.customers'), href: '/customers', icon: Users },
+    { key: 'products', name: t('nav.products'), href: '/products', icon: Package },
+  ]
+
+  const adminNav = [
+    { key: 'tenantRequests', name: t('nav.tenantRequests'), href: '/admin/tenant-requests', icon: Building2 },
+    { key: 'security', name: t('nav.security'), href: '/admin/security', icon: KeyRound },
+  ]
 
   return (
     <aside
@@ -77,7 +81,7 @@ export function Sidebar() {
         <div className="py-2">
           {sidebarOpen && (
             <p className="px-3 mb-2 text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">
-              Main
+              {t('nav.main')}
             </p>
           )}
           {navigation.map((item) => {
@@ -85,7 +89,7 @@ export function Sidebar() {
               (item.href !== '/dashboard' && location.pathname.startsWith(item.href))
             return (
               <Link
-                key={item.name}
+                key={item.key}
                 to={item.href}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -108,7 +112,7 @@ export function Sidebar() {
         <div className="py-2">
           {sidebarOpen && (
             <p className="px-3 mb-2 text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">
-              Management
+              {t('nav.management')}
             </p>
           )}
           {managementNav.map((item) => {
@@ -116,7 +120,7 @@ export function Sidebar() {
               location.pathname.startsWith(item.href)
             return (
               <Link
-                key={item.name}
+                key={item.key}
                 to={item.href}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -143,7 +147,7 @@ export function Sidebar() {
               {sidebarOpen && (
                 <p className="px-3 mb-2 text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider flex items-center gap-1">
                   <Shield className="h-3 w-3" />
-                  Admin
+                  {t('nav.admin')}
                 </p>
               )}
               {adminNav.map((item) => {
@@ -151,7 +155,7 @@ export function Sidebar() {
                   location.pathname.startsWith(item.href)
                 return (
                   <Link
-                    key={item.name}
+                    key={item.key}
                     to={item.href}
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',

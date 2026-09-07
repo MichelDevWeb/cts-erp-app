@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   getMyPendingRequest, 
@@ -8,6 +9,7 @@ import {
   type CreateTenantRequestData 
 } from '@/api/tenantRequests'
 import { acceptApprovedRequest } from '@/api/tenantRequests'
+import { formatDate } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,10 +24,12 @@ import {
   LogOut
 } from 'lucide-react'
 import type { TenantRequest } from '@/types/database.types'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
 
 type ViewState = 'loading' | 'form' | 'pending' | 'approved' | 'rejected'
 
 export function GuestLandingPage() {
+  const { t } = useTranslation()
   const { user, signOut, refreshProfile } = useAuth()
   const navigate = useNavigate()
   
@@ -118,7 +122,7 @@ export function GuestLandingPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -135,21 +139,24 @@ export function GuestLandingPage() {
             </div>
             <span className="text-2xl font-bold tracking-tight">CTS ERP</span>
           </div>
-          <Button variant="ghost" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign out
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="outline" />
+            <Button variant="ghost" onClick={() => signOut()}>
+              <LogOut className="h-4 w-4 mr-2" />
+              {t('guestOnboarding.signOut')}
+            </Button>
+          </div>
         </div>
 
         {/* Welcome message */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Welcome, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
+            {t('dashboard.welcome', { name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User' })}
           </h1>
           <p className="text-muted-foreground">
-            {viewState === 'form' && 'Register your company to get started with CTS ERP.'}
-            {viewState === 'pending' && 'Your company registration is being reviewed.'}
-            {viewState === 'approved' && 'Your company registration has been approved!'}
+            {viewState === 'form' && t('guestOnboarding.welcomeSubtitle')}
+            {viewState === 'pending' && t('guestOnboarding.pendingDesc')}
+            {viewState === 'approved' && t('guestOnboarding.approvedDesc')}
           </p>
         </div>
 
@@ -160,31 +167,35 @@ export function GuestLandingPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
                 <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-500" />
               </div>
-              <CardTitle className="text-xl">Pending Review</CardTitle>
+              <CardTitle className="text-xl">{t('guestOnboarding.pendingTitle')}</CardTitle>
               <CardDescription>
-                Your registration for "{existingRequest.company_name}" is being reviewed by our team.
+                {t('guestOnboarding.pendingDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                You'll receive a notification once your request is approved. This usually takes 1-2 business days.
+                {t('guestOnboarding.pendingTip')}
               </p>
               <div className="bg-muted rounded-lg p-4 text-left">
-                <h4 className="font-medium mb-2">Request Details</h4>
+                <h4 className="font-medium mb-2">{t('common.details')}</h4>
                 <dl className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Company:</dt>
-                    <dd>{existingRequest.company_name}</dd>
+                    <dt className="text-muted-foreground">{t('common.company')}:</dt>
+                    <dd className="font-medium">{existingRequest.company_name}</dd>
                   </div>
                   {existingRequest.business_type && (
                     <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Business Type:</dt>
+                      <dt className="text-muted-foreground">{t('guestOnboarding.businessType')}:</dt>
                       <dd>{existingRequest.business_type}</dd>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Submitted:</dt>
-                    <dd>{new Date(existingRequest.created_at).toLocaleDateString()}</dd>
+                    <dt className="text-muted-foreground">{t('common.status')}:</dt>
+                    <dd className="text-yellow-600 font-medium">{t('admin.statusPending')}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t('common.details')}:</dt>
+                    <dd>{formatDate(existingRequest.created_at)}</dd>
                   </div>
                 </dl>
               </div>
@@ -199,9 +210,9 @@ export function GuestLandingPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                 <PartyPopper className="h-8 w-8 text-green-600 dark:text-green-500" />
               </div>
-              <CardTitle className="text-xl">Congratulations!</CardTitle>
+              <CardTitle className="text-xl">{t('guestOnboarding.approvedTitle')}</CardTitle>
               <CardDescription>
-                Your registration for "{existingRequest.company_name}" has been approved!
+                {t('guestOnboarding.approvedDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
@@ -212,7 +223,7 @@ export function GuestLandingPage() {
                 </div>
               )}
               <p className="text-sm text-muted-foreground mb-6">
-                Click the button below to complete your setup and access the ERP system.
+                {t('guestOnboarding.approvedDesc')}
               </p>
             </CardContent>
             <CardFooter>
@@ -224,12 +235,12 @@ export function GuestLandingPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Setting up your company...
+                    {t('guestOnboarding.entering')}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Complete Setup & Enter Dashboard
+                    {t('guestOnboarding.enterWorkspaceBtn')}
                   </>
                 )}
               </Button>
@@ -243,10 +254,10 @@ export function GuestLandingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
-                Register Your Company
+                {t('guestOnboarding.formTitle')}
               </CardTitle>
               <CardDescription>
-                Fill out the form below to register your company for CTS ERP access.
+                {t('guestOnboarding.formSubtitle')}
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
@@ -259,11 +270,11 @@ export function GuestLandingPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="company_name">Company Name *</Label>
+                  <Label htmlFor="company_name">{t('guestOnboarding.companyName')} *</Label>
                   <Input
                     id="company_name"
                     name="company_name"
-                    placeholder="Acme Corporation"
+                    placeholder={t('guestOnboarding.companyNamePlaceholder')}
                     value={formData.company_name}
                     onChange={handleInputChange}
                     required
@@ -273,12 +284,12 @@ export function GuestLandingPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="company_email">Business Email</Label>
+                    <Label htmlFor="company_email">{t('guestOnboarding.companyEmail')}</Label>
                     <Input
                       id="company_email"
                       name="company_email"
                       type="email"
-                      placeholder="contact@company.com"
+                      placeholder={t('guestOnboarding.companyEmailPlaceholder')}
                       value={formData.company_email}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -286,12 +297,12 @@ export function GuestLandingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="company_phone">Phone Number</Label>
+                    <Label htmlFor="company_phone">{t('guestOnboarding.companyPhone')}</Label>
                     <Input
                       id="company_phone"
                       name="company_phone"
                       type="tel"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder={t('guestOnboarding.companyPhonePlaceholder')}
                       value={formData.company_phone}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -300,11 +311,11 @@ export function GuestLandingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="company_address">Business Address</Label>
+                  <Label htmlFor="company_address">{t('guestOnboarding.companyAddress')}</Label>
                   <Input
                     id="company_address"
                     name="company_address"
-                    placeholder="123 Business St, City, Country"
+                    placeholder={t('guestOnboarding.companyAddressPlaceholder')}
                     value={formData.company_address}
                     onChange={handleInputChange}
                     disabled={isSubmitting}
@@ -312,11 +323,11 @@ export function GuestLandingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="business_type">Business Type</Label>
+                  <Label htmlFor="business_type">{t('guestOnboarding.businessType')}</Label>
                   <Input
                     id="business_type"
                     name="business_type"
-                    placeholder="e.g., Manufacturing, Distribution, Retail"
+                    placeholder={t('guestOnboarding.businessTypePlaceholder')}
                     value={formData.business_type}
                     onChange={handleInputChange}
                     disabled={isSubmitting}
@@ -324,12 +335,12 @@ export function GuestLandingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Tell us about your business (optional)</Label>
+                  <Label htmlFor="description">{t('guestOnboarding.description')}</Label>
                   <textarea
                     id="description"
                     name="description"
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Brief description of your business and what you need..."
+                    placeholder={t('guestOnboarding.descriptionPlaceholder')}
                     value={formData.description}
                     onChange={handleInputChange}
                     disabled={isSubmitting}
@@ -345,10 +356,10 @@ export function GuestLandingPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
+                      {t('guestOnboarding.submitting')}
                     </>
                   ) : (
-                    'Submit Registration Request'
+                    t('guestOnboarding.submitBtn')
                   )}
                 </Button>
               </CardFooter>
@@ -358,7 +369,7 @@ export function GuestLandingPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Need help? Contact support at support@ctserp.com
+          CTS ERP © {new Date().getFullYear()}
         </p>
       </div>
     </div>

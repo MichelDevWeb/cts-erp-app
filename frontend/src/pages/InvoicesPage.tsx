@@ -1,30 +1,33 @@
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, FileText } from 'lucide-react'
 
 export function InvoicesPage() {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('invoices.title')}</h1>
           <p className="text-muted-foreground">
-            Manage invoices and track payments
+            {t('invoices.subtitle')}
           </p>
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          New Invoice
+          {t('invoices.newInvoice')}
         </Button>
       </div>
 
-      {/* Empty State - will be replaced with invoice list in Phase 2 */}
+      {/* Empty State */}
       <Card>
         <CardHeader>
-          <CardTitle>No invoices yet</CardTitle>
+          <CardTitle>{t('invoices.noInvoicesTitle')}</CardTitle>
           <CardDescription>
-            Invoices will be generated from confirmed orders in Phase 2.
+            {t('invoices.noInvoicesDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center py-10">
@@ -32,11 +35,11 @@ export function InvoicesPage() {
             <FileText className="h-10 w-10 text-muted-foreground" />
           </div>
           <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
-            Invoice management will be available in Phase 2. Create orders first, then generate invoices from confirmed orders.
+            {t('invoices.emptyNotice')}
           </p>
-          <Button disabled>
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Coming in Phase 2
+            {t('invoices.createInvoiceBtn')}
           </Button>
         </CardContent>
       </Card>

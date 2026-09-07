@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/stores/uiStore'
 import { cn } from '@/lib/utils'
@@ -11,12 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Menu, LogOut, User, Settings, Shield, Building2 } from 'lucide-react'
+import { Menu, LogOut, User, Settings, Building2, KeyRound } from 'lucide-react'
 import { NotificationDropdown } from './NotificationDropdown'
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
 
 export function Topbar() {
+  const navigate = useNavigate()
   const { user, signOut, role, tenantName, isAdmin } = useAuth()
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { t } = useTranslation()
 
   // Get initials from email or name
   const getInitials = () => {
@@ -36,19 +41,19 @@ export function Topbar() {
     
     const roleConfig: Record<string, { label: string; className: string }> = {
       admin: { 
-        label: 'Admin', 
+        label: t('roles.admin'), 
         className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' 
       },
       staff: { 
-        label: 'Staff', 
+        label: t('roles.staff'), 
         className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' 
       },
       guest: { 
-        label: 'Guest', 
+        label: t('roles.guest'), 
         className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
       },
       customer: { 
-        label: 'Customer', 
+        label: t('roles.customer'), 
         className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
       },
     }
@@ -94,6 +99,9 @@ export function Topbar() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        {/* Language Switcher */}
+        <LanguageSwitcher variant="ghost" />
+
         {/* Notifications */}
         <NotificationDropdown />
 
@@ -125,28 +133,32 @@ export function Topbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>{t('nav.profile')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>{t('nav.settings')}</span>
             </DropdownMenuItem>
             {isAdmin && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Shield className="mr-2 h-4 w-4" />
-                  <span>Admin Panel</span>
+                <DropdownMenuItem onClick={() => navigate('/admin/security')}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  <span>{t('nav.security', 'Bảo mật & Phiên')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin/tenant-requests')}>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  <span>{t('nav.tenantRequests')}</span>
                 </DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={signOut}
+              onClick={() => signOut()}
               className="text-destructive focus:text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign out</span>
+              <span>{t('nav.signOut')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
